@@ -7,13 +7,21 @@ export async function getMyOrgs(): Promise<Organization[]> {
   const sb = createClient()
   const { data, error } = await sb
     .from('org_members')
-    .select('is_admin, organizations(*)')
+    .select('is_admin, org_id')
     .order('joined_at')
   if (error) throw error
-  return (data ?? []).map(m => ({
-    ...(m.organizations as any),
-    is_admin: m.is_admin,
-  }))
+
+  const orgIds = (data ?? []).map(m => m.org_id)
+  if (!orgIds.length) return []
+
+  const { data: orgsData, error: orgsError } = await sb
+    .from('organizations')
+    .select('*')
+    .in('id', orgIds)
+  if (orgsError) throw orgsError
+
+  const adminMap = Object.fromEntries((data ?? []).map(m => [m.org_id, m.is_admin]))
+  return (orgsData ?? []).map(o => ({ ...o, is_admin: adminMap[o.id] ?? false }))
 }
 
 export async function deleteOrg(orgId: string) {
