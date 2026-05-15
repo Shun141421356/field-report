@@ -5,19 +5,23 @@ import type { Organization, OrgMember, OrgInvite, Team } from '@/types'
 
 export async function getMyOrgs(): Promise<Organization[]> {
   const sb = createClient()
+  console.log('getMyOrgs: fetching org_members')
   const { data, error } = await sb
     .from('org_members')
     .select('is_admin, org_id')
     .order('joined_at')
+  console.log('getMyOrgs: org_members result:', data, error)
   if (error) throw error
 
   const orgIds = (data ?? []).map(m => m.org_id)
   if (!orgIds.length) return []
 
+  console.log('getMyOrgs: fetching organizations for', orgIds)
   const { data: orgsData, error: orgsError } = await sb
     .from('organizations')
     .select('*')
     .in('id', orgIds)
+  console.log('getMyOrgs: organizations result:', orgsData, orgsError)
   if (orgsError) throw orgsError
 
   const adminMap = Object.fromEntries((data ?? []).map(m => [m.org_id, m.is_admin]))
