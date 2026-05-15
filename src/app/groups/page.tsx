@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import {
-  getOrgMembers, createOrg, createInvite,
+  getOrgMembers, createOrg, deleteOrg, createInvite,
   setMemberAdmin, removeMember,
   getTeams, createTeam, deleteTeam, getTeamWithMembers, addTeamMember, removeTeamMember,
 } from '@/lib/orgs'
@@ -290,6 +290,16 @@ export default function GroupsPage() {
                 <p style={{ fontSize: 12, color: '#9c9890' }}>{o.is_admin ? '管理者' : 'メンバー'}</p>
               </div>
               {o.id === activeOrg?.id && <span style={{ fontSize: 11, color: '#0f6e56', background: '#e8f7f0', padding: '2px 8px', borderRadius: 99 }}>選択中</span>}
+              {o.is_admin && (
+                <button onClick={async () => {
+                  if (!confirm(`「${o.name}」を削除しますか？この操作は取り消せません。`)) return
+                  await deleteOrg(o.id)
+                  await refreshOrgs()
+                }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d8d4cc', padding: 4, marginLeft: 4 }}>
+                  <Trash2 size={14} />
+                </button>
+              )}
             </div>
           ))}
         </div>
