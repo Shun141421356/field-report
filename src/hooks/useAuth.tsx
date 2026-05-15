@@ -46,7 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function loadOrgs(userId?: string) {
     try {
+      console.log('loadOrgs start')
       const list = await getMyOrgs()
+      console.log('getMyOrgs result:', list)
       setOrgs(list)
       const stored = typeof window !== 'undefined' ? localStorage.getItem('activeOrgId') : null
       if (stored && list.find(o => o.id === stored)) setActiveId(stored)
@@ -59,6 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('is_super_admin data:', data, 'error:', error)
         setIsSuperAdmin(data?.is_super_admin ?? false)
       }
+    } catch (e) {
+      console.error('loadOrgs error:', e)
     } finally { setLoading(false) }
   }
 
