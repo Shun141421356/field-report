@@ -16,6 +16,12 @@ export async function getMyOrgs(): Promise<Organization[]> {
   }))
 }
 
+export async function deleteOrg(orgId: string) {
+  const sb = createClient()
+  const { error } = await sb.from('organizations').delete().eq('id', orgId)
+  if (error) throw error
+}
+
 export async function createOrg(name: string): Promise<string> {
   const sb = createClient()
   const { data: { user } } = await sb.auth.getUser()
