@@ -7,6 +7,7 @@ import { getMyOrgs } from '@/lib/orgs'
 
 interface AuthCtx {
   user: User | null
+  isSuperAdmin: boolean
   orgs: Organization[]
   activeOrg: Organization | null
   setActiveOrgId: (id: string) => void
@@ -16,7 +17,7 @@ interface AuthCtx {
 }
 
 const Ctx = createContext<AuthCtx>({
-  user: null, orgs: [], activeOrg: null,
+  user: null, isSuperAdmin: false, orgs: [], activeOrg: null,
   setActiveOrgId: () => {}, loading: true,
   signOut: async () => {}, refreshOrgs: async () => {},
 })
@@ -24,6 +25,7 @@ const Ctx = createContext<AuthCtx>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const sb = createClient()
   const [user, setUser]     = useState<User | null>(null)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [orgs, setOrgs]     = useState<Organization[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [loading, setLoading]   = useState(true)
@@ -49,6 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const stored = typeof window !== 'undefined' ? localStorage.getItem('activeOrgId') : null
       if (stored && list.find(o => o.id === stored)) setActiveId(stored)
       else if (list.length) setActiveId(list[0].id)
+      // fetch is_super_admin
+      const { data } = await sb.from('profiles').select('is_super_admin').eq('id', (await sb.auth.getUser()).data.user?.id ?? '').single()
+      setIsSuperAdmin(data?.is_super_admin ?? false)
     } finally { setLoading(false) }
   }
 
@@ -59,13 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     await sb.auth.signOut()
-    setUser(null); setOrgs([]); setActiveId(null)
+    setUser(null); setOrgs([]); setActiveId(null); setIsSuperAdmin(false)
   }
 
   const activeOrg = orgs.find(o => o.id === activeId) ?? orgs[0] ?? null
 
   return (
-    <Ctx.Provider value={{ user, orgs, activeOrg, setActiveOrgId: handleSetActiveOrgId, loading, signOut, refreshOrgs: loadOrgs }}>
+    <Ctx.Provider value={{ user, isSuperAdmin, orgs, activeOrg, setActiveOrgId: handleSetActiveOrgId, loading, signOut, refreshOrgs: loadOrgs }}>
       {children}
     </Ctx.Provider>
   )
