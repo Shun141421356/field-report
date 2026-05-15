@@ -12,7 +12,7 @@ import { Plus, Copy, Check, Users, User, Trash2, ChevronRight, ArrowLeft, Shield
 type View = 'top' | 'members' | 'teams' | 'team-detail' | 'invite' | 'new-org'
 
 export default function GroupsPage() {
-  const { activeOrg, orgs, refreshOrgs } = useAuth()
+  const { activeOrg, orgs, refreshOrgs, isSuperAdmin, user } = useAuth()
   const [view, setView]         = useState<View>('top')
   const [members, setMembers]   = useState<OrgMember[]>([])
   const [teams, setTeams]       = useState<Team[]>([])
@@ -290,7 +290,7 @@ export default function GroupsPage() {
                 <p style={{ fontSize: 12, color: '#9c9890' }}>{o.is_admin ? '管理者' : 'メンバー'}</p>
               </div>
               {o.id === activeOrg?.id && <span style={{ fontSize: 11, color: '#0f6e56', background: '#e8f7f0', padding: '2px 8px', borderRadius: 99 }}>選択中</span>}
-              {o.is_admin && (
+              {isSuperAdmin && (
                 <button onClick={async () => {
                   if (!confirm(`「${o.name}」を削除しますか？この操作は取り消せません。`)) return
                   await deleteOrg(o.id)
@@ -305,10 +305,12 @@ export default function GroupsPage() {
         </div>
       )}
 
-      <button onClick={() => setView('new-org')}
-        style={{ width: '100%', border: '2px dashed #d8d4cc', borderRadius: 14, padding: '12px', background: 'none', fontSize: 13, color: '#9c9890', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'inherit' }}>
-        <Plus size={15} /> 新しい組織を作成
-      </button>
+      {isSuperAdmin && (
+        <button onClick={() => setView('new-org')}
+          style={{ width: '100%', border: '2px dashed #d8d4cc', borderRadius: 14, padding: '12px', background: 'none', fontSize: 13, color: '#9c9890', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'inherit' }}>
+          <Plus size={15} /> 新しい組織を作成
+        </button>
+      )}
     </div>
   )
 }
