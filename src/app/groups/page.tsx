@@ -49,6 +49,11 @@ export default function GroupsPage() {
 
   async function handleCreateOrg() {
     if (!newOrgName.trim()) return
+    console.log('isSuperAdmin:', isSuperAdmin)
+    if (!isSuperAdmin) {
+      alert('スーパーAdmin権限がありません')
+      return
+    }
     setActing(true)
     try { await createOrg(newOrgName); await refreshOrgs(); setView('top'); setNewOrgName('') }
     finally { setActing(false) }
