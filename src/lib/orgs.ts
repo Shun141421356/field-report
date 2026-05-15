@@ -39,6 +39,10 @@ export async function createOrg(name: string): Promise<string> {
   const { data: { user } } = await sb.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
+  // super admin チェック
+  const { data: profile } = await sb.from('profiles').select('is_super_admin').eq('id', user.id).single()
+  if (!profile?.is_super_admin) throw new Error('Super admin only')
+
   const slug = name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'org'
 
   const { data, error } = await sb
