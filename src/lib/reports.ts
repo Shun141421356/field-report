@@ -27,31 +27,43 @@ export async function listReports(orgId: string) {
     .from('reports')
     .select(`
       id, title, site_name, worked_at, status, author_id, updated_at,
-      profiles(display_name),
       photos(id, storage_path, section_id)
     `)
     .eq('org_id', orgId)
     .order('worked_at', { ascending: false })
   if (error) throw error
-  return data ?? []
+
+  // プロフィールを別途取得
+  const authorIds = [...new Set((data ?? []).map((r: any) => r.author_id))]
+  const { data: profilesData } = await sb
+    .from('profiles')
+    .select('id, display_name')
+    .in('id', authorIds)
+
+  const profileMap = Object.fromEntries((profilesData ?? []).map((p: any) => [p.id, p]))
+
+  return (data ?? []).map((r: any) => ({
+    ...r,
+    profiles: profileMap[r.author_id] ?? null,
+  }))
 }
 
 export async function searchReports(orgId: string, query: string) {
   const sb = createClient()
-  // simple ILIKE fallback（pg_trgm or websearch）
   const { data, error } = await sb
     .from('reports')
-    .select(`
-      id, title, site_name, location, worked_at, status, author_id,
-      profiles(display_name)
-    `)
+    .select(`id, title, site_name, location, worked_at, status, author_id`)
     .eq('org_id', orgId)
     .eq('status', 'published')
     .or(`title.ilike.%${query}%,site_name.ilike.%${query}%,location.ilike.%${query}%,summary.ilike.%${query}%`)
     .order('worked_at', { ascending: false })
     .limit(40)
   if (error) throw error
-  return data ?? []
+
+  const authorIds = [...new Set((data ?? []).map((r: any) => r.author_id))]
+  const { data: profilesData } = await sb.from('profiles').select('id, display_name').in('id', authorIds)
+  const profileMap = Object.fromEntries((profilesData ?? []).map((p: any) => [p.id, p]))
+  return (data ?? []).map((r: any) => ({ ...r, profiles: profileMap[r.author_id] ?? null }))
 }
 
 // ── Get single ────────────────────────────────────────────────
@@ -62,14 +74,29 @@ export async function getReport(id: string) {
     .from('reports')
     .select(`
       *,
-      profiles(display_name, avatar_url),
       report_sections(*, checklist_items(*), photos(*)),
       photos!photos_report_id_fkey(*),
-      report_permissions(*, teams(id, name), profiles(display_name))
+      report_permissions(*, teams(id, name))
     `)
     .eq('id', id)
     .single()
   if (error) throw error
+
+  // プロフィールを別途取得
+  const { data: profile } = await sb.from('profiles').select('display_name, avatar_url').eq('id', data.author_id).single()
+  ;(data as any).profiles = profile
+
+  // report_permissions のユーザープロフィールも取得
+  if (data.report_permissions) {
+    const userIds = (data.report_permissions as any[]).filter(p => p.user_id).map(p => p.user_id)
+    if (userIds.length) {
+      const { data: permProfiles } = await sb.from('profiles').select('id, display_name').in('id', userIds)
+      const permProfileMap = Object.fromEntries((permProfiles ?? []).map((p: any) => [p.id, p]))
+      ;(data.report_permissions as any[]).forEach(p => {
+        if (p.user_id) p.profiles = permProfileMap[p.user_id] ?? null
+      })
+    }
+  }
 
   if (data.report_sections) {
     data.report_sections.sort((a: any, b: any) => a.position - b.position)
