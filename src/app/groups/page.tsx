@@ -124,6 +124,7 @@ export default function GroupsPage() {
       <div style={S.card}>
         <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input placeholder="組織名（例：○○建設 東京支店）" value={newOrgName} onChange={e => setNewOrgName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && e.preventDefault()}
             style={{ border: '0.5px solid #d8d4cc', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none' }} />
           <button onClick={handleCreateOrg} disabled={acting || !newOrgName.trim()} style={S.btn(true)}>
             {acting ? '作成中...' : '作成する'}
