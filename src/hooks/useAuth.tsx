@@ -34,17 +34,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sb.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null
       setUser(u)
-      if (u) loadOrgs(); else setLoading(false)
+      if (u) loadOrgs(u.id); else setLoading(false)
     })
     const { data: { subscription } } = sb.auth.onAuthStateChange((_, session) => {
       const u = session?.user ?? null
       setUser(u)
-      if (u) loadOrgs(); else { setOrgs([]); setLoading(false) }
+      if (u) loadOrgs(u.id); else { setOrgs([]); setLoading(false) }
     })
     return () => subscription.unsubscribe()
   }, [])
 
-  async function loadOrgs() {
+  async function loadOrgs(userId?: string) {
     try {
       const list = await getMyOrgs()
       setOrgs(list)
@@ -52,8 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (stored && list.find(o => o.id === stored)) setActiveId(stored)
       else if (list.length) setActiveId(list[0].id)
       // fetch is_super_admin
-      const { data } = await sb.from('profiles').select('is_super_admin').eq('id', (await sb.auth.getUser()).data.user?.id ?? '').single()
-      setIsSuperAdmin(data?.is_super_admin ?? false)
+      const uid = userId ?? (await sb.auth.getUser()).data.user?.id
+      console.log('uid:', uid)
+      if (uid) {
+        const { data, error } = await sb.from('profiles').select('is_super_admin').eq('id', uid).single()
+        console.log('is_super_admin data:', data, 'error:', error)
+        setIsSuperAdmin(data?.is_super_admin ?? false)
+      }
     } finally { setLoading(false) }
   }
 
