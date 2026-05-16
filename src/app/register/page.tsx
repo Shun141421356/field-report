@@ -25,8 +25,14 @@ function RegisterForm() {
       options: { data: { display_name: name } },
     })
     if (error) { setError(error.message); setLoading(false); return }
+
     if (inviteToken && data.user) {
-      await useOrgInvite(inviteToken).catch(() => {})
+      // セッションが確立されるまで少し待つ
+      await sb.auth.setSession({
+        access_token: data.session?.access_token ?? '',
+        refresh_token: data.session?.refresh_token ?? '',
+      })
+      await useOrgInvite(inviteToken).catch(console.error)
     }
     router.push('/reports')
   }
