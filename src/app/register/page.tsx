@@ -26,13 +26,16 @@ function RegisterForm() {
     })
     if (error) { setError(error.message); setLoading(false); return }
 
-    if (inviteToken && data.user) {
-      // セッションが確立されるまで少し待つ
+    if (inviteToken && data.session) {
+      // セッションを明示的にセット
       await sb.auth.setSession({
-        access_token: data.session?.access_token ?? '',
-        refresh_token: data.session?.refresh_token ?? '',
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
       })
-      await useOrgInvite(inviteToken).catch(console.error)
+      // セッション確立を待つ
+      await new Promise(r => setTimeout(r, 500))
+      const result = await useOrgInvite(inviteToken).catch(console.error)
+      console.log('invite result:', result)
     }
     router.push('/reports')
   }
