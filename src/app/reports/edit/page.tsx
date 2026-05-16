@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
 import { useAuth } from '@/hooks/useAuth'
-import { getReport, saveReport } from '@/lib/reports'
+import { getReport, saveReport, getPhotoUrl } from '@/lib/reports'
 import type { ReportFormData, SectionFormData } from '@/types'
 import { Plus, X, Camera, Loader2, ArrowLeft } from 'lucide-react'
 
@@ -22,6 +22,8 @@ function EditForm() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [galPrev, setGalPrev] = useState<string[]>([])
+  const [existingGalPhotos, setExistingGalPhotos] = useState<{id: string, url: string}[]>([])
+  const [existingSecPhotos, setExistingSecPhotos] = useState<Record<string, {id: string, url: string}[]>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -30,6 +32,19 @@ function EditForm() {
     getReport(reportId)
       .then(r => {
         console.log('getReport ok:', r?.id)
+
+        // 既存の現場写真（ギャラリー）
+        const galPhotos = (r.photos ?? []).filter((p: any) => p.section_id === null)
+        setExistingGalPhotos(galPhotos.map((p: any) => ({ id: p.id, url: getPhotoUrl(p.storage_path) })))
+
+        // 既存のセクション写真
+        const secPhotosMap: Record<string, {id: string, url: string}[]> = {}
+        ;(r.report_sections ?? []).forEach((s: any) => {
+          const sp = (r.photos ?? []).filter((p: any) => p.section_id === s.id)
+          secPhotosMap[s.id] = sp.map((p: any) => ({ id: p.id, url: getPhotoUrl(p.storage_path) }))
+        })
+        setExistingSecPhotos(secPhotosMap)
+
         setForm({
           title: r.title ?? '',
           site_name: r.site_name ?? '',
@@ -165,8 +180,10 @@ function EditForm() {
                 {/* section photos */}
                 <SectionPhotoArea
                   photos={sec.photos}
+                  existingPhotos={sec.id ? (existingSecPhotos[sec.id] ?? []) : []}
                   onAdd={files => updSec(si, { photos: [...sec.photos, ...files] })}
                   onRemove={i => updSec(si, { photos: sec.photos.filter((_, j) => j !== i) })}
+                  onRemoveExisting={photoId => setExistingSecPhotos(prev => ({ ...prev, [sec.id!]: (prev[sec.id!] ?? []).filter(p => p.id !== photoId) }))}
                 />
               </div>
             </div>
@@ -184,7 +201,22 @@ function EditForm() {
         </div>
 
         <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #d8d4cc', padding: 16 }}>
-          <p style={{ fontSize: 11, fontFamily: 'monospace', color: '#9c9890', marginBottom: 10 }}>現場写真を追加</p>
+          <p style={{ fontSize: 11, fontFamily: 'monospace', color: '#9c9890', marginBottom: 10 }}>現場写真</p>
+          {/* 既存写真 */}
+          {existingGalPhotos.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 10 }}>
+              {existingGalPhotos.map(p => (
+                <div key={p.id} style={{ position: 'relative', aspectRatio: '1' }}>
+                  <img src={p.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                  <button onClick={() => setExistingGalPhotos(prev => prev.filter(x => x.id !== p.id))}
+                    style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <X size={10} color="#fff" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* 新規追加 */}
           <div {...getRootProps()} style={{ border: `2px dashed ${isDragActive ? '#1a1916' : '#d8d4cc'}`, borderRadius: 12, padding: '24px 16px', textAlign: 'center', cursor: 'pointer' }}>
             <input {...getInputProps()} />
             <Camera size={26} style={{ color: '#d8d4cc', margin: '0 auto 8px' }} />
@@ -192,7 +224,17 @@ function EditForm() {
           </div>
           {galPrev.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 10 }}>
-              {galPrev.map((url, i) => <img key={i} src={url} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 8 }} />)}
+              {galPrev.map((url, i) => (
+                <div key={i} style={{ position: 'relative', aspectRatio: '1' }}>
+                  <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                  <button onClick={() => {
+                    setForm(f => f ? { ...f, gallery_photos: f.gallery_photos.filter((_, j) => j !== i) } : f)
+                    setGalPrev(p => p.filter((_, j) => j !== i))
+                  }} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <X size={10} color="#fff" />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -206,10 +248,12 @@ export default function EditReportPage() {
   return <Suspense fallback={<div style={{display:'flex',justifyContent:'center',padding:48}}><div style={{width:22,height:22,border:'2px solid #d8d4cc',borderTopColor:'#1a1916',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>}><EditForm /></Suspense>
 }
 
-function SectionPhotoArea({ photos, onAdd, onRemove }: {
+function SectionPhotoArea({ photos, existingPhotos, onAdd, onRemove, onRemoveExisting }: {
   photos: File[]
+  existingPhotos: {id: string, url: string}[]
   onAdd: (files: File[]) => void
   onRemove: (i: number) => void
+  onRemoveExisting: (id: string) => void
 }) {
   const [prevs, setPrevs] = useState<string[]>([])
 
@@ -227,6 +271,17 @@ function SectionPhotoArea({ photos, onAdd, onRemove }: {
 
   return (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+      {/* 既存写真 */}
+      {existingPhotos.map(p => (
+        <div key={p.id} style={{ position: 'relative', width: 56, height: 56 }}>
+          <img src={p.url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #d8d4cc' }} />
+          <button onClick={() => onRemoveExisting(p.id)}
+            style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <X size={9} color="#fff" />
+          </button>
+        </div>
+      ))}
+      {/* 新規写真 */}
       {prevs.map((url, i) => (
         <div key={i} style={{ position: 'relative', width: 56, height: 56 }}>
           <img src={url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #d8d4cc' }} />
