@@ -62,11 +62,21 @@ export async function getOrgMembers(orgId: string): Promise<OrgMember[]> {
   const sb = createClient()
   const { data, error } = await sb
     .from('org_members')
-    .select('*, profiles(display_name, avatar_url)')
+    .select('*')
     .eq('org_id', orgId)
     .order('joined_at')
   if (error) throw error
-  return data ?? []
+
+  const userIds = (data ?? []).map(m => m.user_id)
+  if (!userIds.length) return []
+
+  const { data: profilesData } = await sb
+    .from('profiles')
+    .select('id, display_name, avatar_url')
+    .in('id', userIds)
+  const profileMap = Object.fromEntries((profilesData ?? []).map((p: any) => [p.id, p]))
+
+  return (data ?? []).map(m => ({ ...m, profiles: profileMap[m.user_id] ?? null }))
 }
 
 export async function setMemberAdmin(orgId: string, userId: string, isAdmin: boolean) {
@@ -144,10 +154,18 @@ export async function getTeamWithMembers(teamId: string) {
   const sb = createClient()
   const { data, error } = await sb
     .from('teams')
-    .select('*, team_members(*, profiles(display_name, avatar_url))')
+    .select('*, team_members(*)')
     .eq('id', teamId)
     .single()
   if (error) throw error
+
+  const userIds = (data.team_members ?? []).map((m: any) => m.user_id)
+  if (userIds.length) {
+    const { data: profilesData } = await sb.from('profiles').select('id, display_name, avatar_url').in('id', userIds)
+    const profileMap = Object.fromEntries((profilesData ?? []).map((p: any) => [p.id, p]))
+    ;(data.team_members as any[]).forEach(m => { m.profiles = profileMap[m.user_id] ?? null })
+  }
+
   return data
 }
 
