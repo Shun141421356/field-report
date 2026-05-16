@@ -66,28 +66,28 @@ export default function PublishModal({ reportId, orgId, isAdmin, onDone, onClose
   const selectedCount = entries.length
 
   return (
-    <div style={{ minHeight: 540, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
-      <div style={{ background: 'var(--color-background-primary)', borderRadius: 16, width: '100%', maxWidth: 480, overflow: 'hidden', border: '0.5px solid var(--color-border-tertiary)' }}>
+    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+      <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480, overflow: 'hidden', border: '0.5px solid #d8d4cc' }}>
 
         {/* Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--color-border-tertiary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Globe size={18} style={{ color: 'var(--color-text-secondary)' }} aria-hidden />
+        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid #d8d4cc', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Globe size={18} style={{ color: '#6b6760' }} aria-hidden />
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: 500, fontSize: 14 }}>報告書を公開する</p>
-            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>
+            <p style={{ fontSize: 12, color: '#6b6760', marginTop: 1 }}>
               アクセス権限を設定してから公開します。未指定のメンバーは閲覧者になります。
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b6760', padding: 4 }}>
             <X size={16} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '0.5px solid var(--color-border-tertiary)', padding: '0 20px' }}>
+        <div style={{ display: 'flex', borderBottom: '0.5px solid #d8d4cc', padding: '0 20px' }}>
           {(['team', 'user'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              style={{ padding: '10px 0', marginRight: 20, fontSize: 13, fontFamily: 'inherit', background: 'none', border: 'none', cursor: 'pointer', borderBottom: `2px solid ${tab === t ? 'var(--color-text-primary)' : 'transparent'}`, color: tab === t ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontWeight: tab === t ? 500 : 400 }}>
+              style={{ padding: '10px 0', marginRight: 20, fontSize: 13, fontFamily: 'inherit', background: 'none', border: 'none', cursor: 'pointer', borderBottom: `2px solid ${tab === t ? '#1a1916' : 'transparent'}`, color: tab === t ? '#1a1916' : '#6b6760', fontWeight: tab === t ? 500 : 400 }}>
               {t === 'team' ? 'チーム単位' : 'ユーザー個別'}
             </button>
           ))}
@@ -97,7 +97,7 @@ export default function PublishModal({ reportId, orgId, isAdmin, onDone, onClose
         <div style={{ maxHeight: 280, overflowY: 'auto', padding: '8px 12px' }}>
           {tab === 'team' && (
             teams.length === 0
-              ? <p style={{ padding: '20px 8px', fontSize: 13, color: 'var(--color-text-secondary)', textAlign: 'center' }}>チームがありません。先にグループ管理でチームを作成してください。</p>
+              ? <p style={{ padding: '20px 8px', fontSize: 13, color: '#6b6760', textAlign: 'center' }}>チームがありません。先にグループ管理でチームを作成してください。</p>
               : teams.map(team => (
                 <PermRow
                   key={team.id}
@@ -113,7 +113,7 @@ export default function PublishModal({ reportId, orgId, isAdmin, onDone, onClose
           )}
           {tab === 'user' && (
             members.length === 0
-              ? <p style={{ padding: '20px 8px', fontSize: 13, color: 'var(--color-text-secondary)', textAlign: 'center' }}>メンバーがいません</p>
+              ? <p style={{ padding: '20px 8px', fontSize: 13, color: '#6b6760', textAlign: 'center' }}>メンバーがいません</p>
               : members.map(m => (
                 <PermRow
                   key={m.user_id}
@@ -131,11 +131,11 @@ export default function PublishModal({ reportId, orgId, isAdmin, onDone, onClose
 
         {/* Selected summary */}
         {entries.length > 0 && (
-          <div style={{ padding: '8px 20px', borderTop: '0.5px solid var(--color-border-tertiary)', background: 'var(--color-background-secondary)' }}>
-            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 4 }}>設定済みの権限</p>
+          <div style={{ padding: '8px 20px', borderTop: '0.5px solid #d8d4cc', background: '#f5f4f0' }}>
+            <p style={{ fontSize: 12, color: '#6b6760', marginBottom: 4 }}>設定済みの権限</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
               {entries.map((e, i) => (
-                <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: e.level === 'editor' ? 'var(--color-background-info)' : 'var(--color-background-secondary)', color: e.level === 'editor' ? 'var(--color-text-info)' : 'var(--color-text-secondary)', border: '0.5px solid var(--color-border-secondary)' }}>
+                <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: e.level === 'editor' ? '#e6f1fb' : '#f5f4f0', color: e.level === 'editor' ? '#185fa5' : '#6b6760', border: '0.5px solid #d8d4cc' }}>
                   {e.label} · {e.level === 'editor' ? '編集' : '閲覧'}
                 </span>
               ))}
@@ -144,23 +144,23 @@ export default function PublishModal({ reportId, orgId, isAdmin, onDone, onClose
         )}
 
         {/* Note */}
-        <div style={{ padding: '8px 20px', borderTop: '0.5px solid var(--color-border-tertiary)' }}>
-          <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+        <div style={{ padding: '8px 20px', borderTop: '0.5px solid #d8d4cc' }}>
+          <p style={{ fontSize: 12, color: '#9c9890' }}>
             ※ 指定されなかった組織メンバーは自動的に <strong>閲覧者</strong> になります
           </p>
         </div>
 
         {error && (
-          <p style={{ padding: '0 20px 8px', fontSize: 13, color: 'var(--color-text-danger)' }}>{error}</p>
+          <p style={{ padding: '0 20px 8px', fontSize: 13, color: '#c0392b' }}>{error}</p>
         )}
 
         {/* Actions */}
-        <div style={{ padding: '12px 20px', borderTop: '0.5px solid var(--color-border-tertiary)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--color-border-secondary)', background: 'none', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--color-text-primary)' }}>
+        <div style={{ padding: '12px 20px', borderTop: '0.5px solid #d8d4cc', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 8, border: '0.5px solid #d8d4cc', background: 'none', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#1a1916' }}>
             キャンセル
           </button>
           <button onClick={handlePublish} disabled={saving}
-            style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--color-text-primary)', color: 'var(--color-background-primary)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, opacity: saving ? 0.6 : 1 }}>
+            style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#1a1916', color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, opacity: saving ? 0.6 : 1 }}>
             {saving && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
             <Globe size={14} />
             公開する{selectedCount > 0 ? `（${selectedCount}件指定）` : '（全員閲覧者）'}
@@ -181,21 +181,21 @@ function PermRow({ icon, label, sub, selected, level, onToggle, onLevel }: {
   onLevel: (lv: ReportPermissionLevel) => void
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px', borderRadius: 8, cursor: 'pointer', background: selected ? 'var(--color-background-secondary)' : 'transparent', marginBottom: 2 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px', borderRadius: 8, cursor: 'pointer', background: selected ? '#f5f4f0' : 'transparent', marginBottom: 2 }}>
       <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-        <div style={{ width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${selected ? 'var(--color-text-primary)' : 'var(--color-border-secondary)'}`, background: selected ? 'var(--color-text-primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {selected && <Check size={11} style={{ color: 'var(--color-background-primary)' }} />}
+        <div style={{ width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${selected ? '#1a1916' : '#d8d4cc'}`, background: selected ? '#1a1916' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          {selected && <Check size={11} style={{ color: '#fff' }} />}
         </div>
-        <div style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }}>{icon}</div>
+        <div style={{ color: '#6b6760', flexShrink: 0 }}>{icon}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</p>
-          <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{sub}</p>
+          <p style={{ fontSize: 13, fontWeight: 500, color: '#1a1916', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</p>
+          <p style={{ fontSize: 11, color: '#9c9890' }}>{sub}</p>
         </div>
       </div>
       {selected && (
         <select value={level} onChange={e => onLevel(e.target.value as ReportPermissionLevel)}
           onClick={e => e.stopPropagation()}
-          style={{ fontSize: 12, border: '0.5px solid var(--color-border-secondary)', borderRadius: 6, padding: '3px 6px', background: 'var(--color-background-primary)', color: 'var(--color-text-primary)', fontFamily: 'inherit', cursor: 'pointer' }}>
+          style={{ fontSize: 12, border: '0.5px solid #d8d4cc', borderRadius: 6, padding: '3px 6px', background: '#fff', color: '#1a1916', fontFamily: 'inherit', cursor: 'pointer' }}>
           <option value="viewer">閲覧のみ</option>
           <option value="editor">閲覧 + 編集</option>
         </select>
