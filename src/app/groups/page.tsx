@@ -159,11 +159,17 @@ export default function GroupsPage() {
                 <p style={{ fontSize: 12, color: '#9c9890' }}>{m.is_admin ? '管理者' : 'メンバー'}</p>
               </div>
               {isAdmin && m.is_admin && <Shield size={14} style={{ color: '#9c9890' }} />}
-              {isAdmin && (
-                <button onClick={() => removeMember(activeOrg!.id, m.user_id).then(loadMembers)}
+              {isAdmin && m.user_id !== user?.id && (
+                <button onClick={() => {
+                  if (!confirm(`「${m.profiles?.display_name ?? 'このメンバー'}」を削除しますか？`)) return
+                  removeMember(activeOrg!.id, m.user_id).then(loadMembers)
+                }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d8d4cc' }}>
                   <Trash2 size={14} />
                 </button>
+              )}
+              {m.user_id === user?.id && (
+                <span style={{ fontSize: 11, color: '#9c9890', background: '#f0ede8', padding: '2px 8px', borderRadius: 99 }}>自分</span>
               )}
             </div>
           ))}
