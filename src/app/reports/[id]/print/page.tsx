@@ -5,14 +5,22 @@ import { getReport, getPhotoUrl } from '@/lib/reports'
 import { format, parseISO } from 'date-fns'
 import { ja } from 'date-fns/locale'
 
+const PHOTO_SIZES = [
+  { label: '1x', cols: 4 },
+  { label: '1.5x', cols: 3 },
+  { label: '2x', cols: 2 },
+  { label: '3x', cols: 1 },
+]
+
 export default function PrintPage() {
   const { id } = useParams<{ id: string }>()
   const [report, setReport] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [photoSize, setPhotoSize] = useState(1) // index of PHOTO_SIZES
 
   useEffect(() => {
     getReport(id)
-      .then(r => { setReport(r); setTimeout(() => window.print(), 800) })
+      .then(r => { setReport(r) })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [id])
@@ -31,10 +39,9 @@ export default function PrintPage() {
   const sections = report.report_sections ?? []
   const galleryPhotos = (report.photos ?? []).filter((p: any) => p.section_id === null)
   const workedAt = format(parseISO(report.worked_at), 'yyyy.MM.dd', { locale: ja })
-  const generatedAt = format(new Date(), 'yyyy.MM.dd HH:mm', { locale: ja })
-
   const mono = "'IBM Plex Mono', 'Courier New', monospace"
   const sans = "'Noto Sans JP', sans-serif"
+  const cols = PHOTO_SIZES[photoSize].cols
 
   return (
     <>
@@ -54,20 +61,32 @@ export default function PrintPage() {
         }
       `}</style>
 
-      {/* 印刷ボタン（画面表示時のみ） */}
-      <div className="no-print" style={{ position: 'fixed', top: 16, right: 16, display: 'flex', gap: 8, zIndex: 100 }}>
+      {/* 操作バー（画面表示時のみ） */}
+      <div className="no-print" style={{ position: 'fixed', top: 16, right: 16, display: 'flex', gap: 8, zIndex: 100, alignItems: 'center' }}>
+        {/* 写真サイズ切り替え */}
+        <div style={{ display: 'flex', gap: 2, background: '#fff', border: '1px solid #d8d4cc', borderRadius: 8, padding: 3, fontFamily: mono, fontSize: 11 }}>
+          {PHOTO_SIZES.map((s, i) => (
+            <button key={s.label} onClick={() => setPhotoSize(i)}
+              style={{ padding: '4px 10px', borderRadius: 5, border: 'none', background: photoSize === i ? '#1a1916' : 'transparent', color: photoSize === i ? '#fff' : '#6b6760', cursor: 'pointer', fontFamily: mono, fontSize: 11, letterSpacing: '0.05em' }}>
+              {s.label}
+            </button>
+          ))}
+        </div>
         <button onClick={() => window.print()}
-          style={{ background: '#1a1916', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 20px', fontFamily: mono, fontSize: 12, letterSpacing: '0.1em', cursor: 'pointer' }}>
+          style={{ background: '#1a1916', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 20px', fontFamily: mono, fontSize: 11, letterSpacing: '0.1em', cursor: 'pointer' }}>
           PRINT / PDF
         </button>
         <button onClick={() => window.close()}
-          style={{ background: 'none', border: '1px solid #d8d4cc', borderRadius: 8, padding: '8px 16px', fontFamily: mono, fontSize: 12, cursor: 'pointer' }}>
+          style={{ background: 'none', border: '1px solid #d8d4cc', borderRadius: 8, padding: '8px 16px', fontFamily: mono, fontSize: 11, cursor: 'pointer' }}>
           CLOSE
         </button>
       </div>
 
       <div className="sheet">
         {/* ─── Header ─── */}
+        <div style={{ textAlign: 'center', marginBottom: 6 }}>
+          <div style={{ fontFamily: mono, fontSize: 11, letterSpacing: '0.25em', fontWeight: 700 }}>FIELD REPORT</div>
+        </div>
         <div style={{ borderBottom: '2px solid #1a1916', paddingBottom: 14, marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
@@ -92,17 +111,15 @@ export default function PrintPage() {
           </div>
         </div>
 
-        {/* ─── Meta grid ─── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', border: '1px solid #1a1916', marginBottom: 14 }}>
+        {/* ─── Meta grid（DATE / OPERATOR のみ） ─── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', border: '1px solid #1a1916', marginBottom: 14 }}>
           {[
             { label: 'DATE', value: workedAt },
             { label: 'OPERATOR', value: report.profiles?.display_name ?? '—' },
-            { label: 'WEATHER', value: `${report.weather ?? '—'}${report.temperature != null ? ' / ' + report.temperature + '℃' : ''}` },
-            { label: 'STATUS', value: report.status === 'published' ? 'PUBLISHED' : 'DRAFT' },
           ].map((item, i, arr) => (
             <div key={item.label} style={{ padding: '8px 12px', borderRight: i < arr.length - 1 ? '1px solid #1a1916' : 'none' }}>
               <div style={{ fontFamily: mono, fontSize: 8, letterSpacing: '0.15em', color: '#9c9890', marginBottom: 3 }}>{item.label}</div>
-              <div style={{ fontFamily: mono, fontSize: 11, fontWeight: 600 }}>{item.value}</div>
+              <div style={{ fontFamily: mono, fontSize: 12, fontWeight: 600 }}>{item.value}</div>
             </div>
           ))}
         </div>
@@ -129,9 +146,9 @@ export default function PrintPage() {
                     <span style={{ fontFamily: mono, fontSize: 8, letterSpacing: '0.1em', background: '#1a1916', color: '#fff', padding: '2px 8px', whiteSpace: 'nowrap' }}>
                       OP-{String(i + 1).padStart(2, '0')}
                     </span>
-                    <span style={{ fontFamily: sans, fontSize: 13, fontWeight: 600 }}>
-                      {sec.title || '（タイトルなし）'}
-                    </span>
+                    {sec.title && (
+                      <span style={{ fontFamily: sans, fontSize: 13, fontWeight: 600 }}>{sec.title}</span>
+                    )}
                   </div>
                   {sec.mode === 'text' && sec.content && (
                     <div style={{ fontFamily: sans, fontSize: 12, lineHeight: 1.8, color: '#333', whiteSpace: 'pre-wrap' }}>
@@ -145,16 +162,16 @@ export default function PrintPage() {
                           <div style={{ width: 13, height: 13, border: '1.5px solid #1a1916', background: item.done ? '#1a1916' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 8, flexShrink: 0 }}>
                             {item.done ? '✓' : ''}
                           </div>
-                          <span style={{ color: item.done ? '#333' : '#6b6760', textDecoration: 'none' }}>{item.text}</span>
+                          <span style={{ color: '#333' }}>{item.text}</span>
                         </div>
                       ))}
                     </div>
                   )}
                   {secPhotos.length > 0 && (
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 6, marginTop: 10 }}>
                       {secPhotos.map((p: any) => (
                         <img key={p.id} src={getPhotoUrl(p.storage_path)} alt=""
-                          style={{ width: 80, height: 80, objectFit: 'cover', border: '1px solid #d8d4cc' }} />
+                          style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', border: '1px solid #d8d4cc', display: 'block' }} />
                       ))}
                     </div>
                   )}
@@ -182,7 +199,7 @@ export default function PrintPage() {
             <div style={{ fontFamily: mono, fontSize: 8, letterSpacing: '0.2em', color: '#9c9890', borderBottom: '1px solid #1a1916', paddingBottom: 4, marginBottom: 10 }}>
               FIELD EVIDENCE ({galleryPhotos.length} images)
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 6 }}>
               {galleryPhotos.map((p: any, i: number) => (
                 <div key={p.id}>
                   <img src={getPhotoUrl(p.storage_path)} alt={`PHOTO ${String(i + 1).padStart(2, '0')}`}
@@ -199,7 +216,7 @@ export default function PrintPage() {
         {/* ─── Footer ─── */}
         <div style={{ borderTop: '2px solid #1a1916', paddingTop: 8, display: 'flex', justifyContent: 'space-between', fontFamily: mono, fontSize: 8, letterSpacing: '0.1em', color: '#9c9890' }}>
           <span>FIELD REPORT SYSTEM</span>
-          <span>GENERATED {generatedAt}</span>
+          <span>{workedAt}</span>
         </div>
       </div>
     </>
