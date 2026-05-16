@@ -73,7 +73,7 @@ export default function ReportDetailPage() {
               style={{ fontSize: 12, border: '0.5px solid #d8d4cc', background: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Edit2 size={12} /> 編集
             </button>
-            <button onClick={() => window.print()}
+            <button onClick={() => window.open(`/reports/${id}/print`, '_blank')}
               style={{ fontSize: 12, border: '0.5px solid #d8d4cc', background: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Printer size={12} /> PDF
             </button>
