@@ -55,7 +55,16 @@ export default function PublishModal({ reportId, orgId, isAdmin, onDone, onClose
     setSaving(true)
     setError('')
     try {
-      await publishWithPermissions(reportId, entries)
+      const sb = (await import('@/lib/supabase')).createClient()
+      const { data: { user } } = await sb.auth.getUser()
+      // 作成者を自動的にeditorとして追加
+      const authorEntry: PermissionEntry = user
+        ? { user_id: user.id, level: 'editor', label: 'あなた（作成者）' }
+        : null as any
+      const allEntries = authorEntry
+        ? [authorEntry, ...entries.filter(e => e.user_id !== user?.id)]
+        : entries
+      await publishWithPermissions(reportId, allEntries)
       onDone()
     } catch (e: any) {
       setError(e.message)
