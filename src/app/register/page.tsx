@@ -3,7 +3,6 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
-import { useOrgInvite } from '@/lib/orgs'
 
 function RegisterForm() {
   const sb = createClient()
@@ -26,16 +25,32 @@ function RegisterForm() {
     })
     if (error) { setError(error.message); setLoading(false); return }
 
-    if (inviteToken && data.session) {
+    if (inviteToken && data.session && data.user) {
       // セッションを明示的にセット
       await sb.auth.setSession({
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
       })
-      // セッション確立を待つ
-      await new Promise(r => setTimeout(r, 500))
-      const result = await useOrgInvite(inviteToken).catch(console.error)
-      console.log('invite result:', result)
+      await new Promise(r => setTimeout(r, 800))
+
+      // 招待トークンを確認してorg_membersに直接INSERT
+      const { data: inv } = await sb
+        .from('org_invites')
+        .select('org_id, is_admin')
+        .eq('token', inviteToken)
+        .gt('expires_at', new Date().toISOString())
+        .single()
+
+      if (inv) {
+        await sb.from('org_members').insert({
+          org_id: inv.org_id,
+          user_id: data.user.id,
+          is_admin: inv.is_admin,
+        }).then(() => {
+          // used_countをインクリメント
+          sb.from('org_invites').update({ used_count: sb.rpc('used_count') }).eq('token', inviteToken)
+        })
+      }
     }
     router.push('/reports')
   }
