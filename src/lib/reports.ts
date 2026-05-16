@@ -190,6 +190,29 @@ export async function saveReport(
   return id!
 }
 
+// ── Delete photos ─────────────────────────────────────────────
+
+export async function deletePhotos(photoIds: string[]) {
+  if (!photoIds.length) return
+  const sb = createClient()
+
+  // まずstorage_pathを取得
+  const { data, error } = await sb
+    .from('photos')
+    .select('id, storage_path')
+    .in('id', photoIds)
+  if (error) throw error
+
+  // Storageから削除
+  const paths = (data ?? []).map((p: any) => p.storage_path)
+  if (paths.length) {
+    await sb.storage.from('report-photos').remove(paths)
+  }
+
+  // DBから削除
+  await sb.from('photos').delete().in('id', photoIds)
+}
+
 // ── Publish with permissions ───────────────────────────────────
 
 export async function publishWithPermissions(reportId: string, permissions: PermissionEntry[]) {
