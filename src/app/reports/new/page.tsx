@@ -212,9 +212,18 @@ function SectionCard({ idx, sec, onUpdate, onRemove, onAddItem, onUpdItem, onRmI
         {/* section photos */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
           {prevs.map((url, i) => (
-            <img key={i} src={url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #d8d4cc' }} />
+            <div key={i} style={{ position: 'relative', width: 56, height: 56 }}>
+              <img src={url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #d8d4cc' }} />
+              <button onClick={() => {
+                onUpdate({ photos: sec.photos.filter((_, j) => j !== i) })
+                setPrevs(p => p.filter((_, j) => j !== i))
+              }}
+                style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <X size={9} color="#fff" />
+              </button>
+            </div>
           ))}
-          <label style={{ width: 56, height: 56, border: '1px dashed #d8d4cc', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <label style={{ width: 56, height: 56, border: '1px dashed #d8d4cc', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
             <Camera size={18} style={{ color: '#d8d4cc' }} />
             <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handlePhotos} />
           </label>
