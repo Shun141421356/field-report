@@ -51,7 +51,7 @@ export default function ReportDetailPage() {
     <div style={{ maxWidth: 640, margin: '0 auto' }}>
       {/* Sticky header */}
       <div style={{ position: 'sticky', top: 48, zIndex: 30, background: '#f5f4f0', borderBottom: '0.5px solid #d8d4cc', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}>
+        <button onClick={() => router.push('/reports')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}>
           <ArrowLeft size={18} />
         </button>
         <span style={{ flex: 1, fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6, color: published ? '#0f6e56' : '#6b6760', background: published ? '#e8f7f0' : '#f0ede8', padding: '3px 10px', borderRadius: 99 }}>
