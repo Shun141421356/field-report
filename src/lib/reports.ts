@@ -145,42 +145,72 @@ export async function saveReport(
   if (id) {
     const { error } = await sb.from('reports').update(payload).eq('id', id)
     if (error) throw error
-    // 既存セクション削除（再作成）
-    await sb.from('report_sections').delete().eq('report_id', id)
+    // セクションは削除せず、既存IDがあればupdateする（写真のsection_idを保持するため）
   } else {
     const { data, error } = await sb.from('reports').insert(payload).select('id').single()
     if (error) throw error
     id = data.id
   }
 
-  // セクション
+  // セクション：既存IDがあればupdate、なければinsert
+  const keptSectionIds: string[] = []
   for (let i = 0; i < form.sections.length; i++) {
     const sec = form.sections[i]
-    const { data: sd, error: se } = await sb
-      .from('report_sections')
-      .insert({
-        report_id: id,
-        position: i,
-        title: sec.title || null,
-        mode: sec.mode,
-        content: sec.mode === 'text' ? (sec.content || null) : null,
-      })
-      .select('id')
-      .single()
-    if (se) throw se
+    const secPayload = {
+      report_id: id,
+      position: i,
+      title: sec.title || null,
+      mode: sec.mode,
+      content: sec.mode === 'text' ? (sec.content || null) : null,
+    }
 
+    let sectionId: string
+    if (sec.id) {
+      // 既存セクションをupdate
+      const { error: se } = await sb.from('report_sections').update(secPayload).eq('id', sec.id)
+      if (se) throw se
+      sectionId = sec.id
+      // チェックリストは一旦削除して再作成
+      await sb.from('checklist_items').delete().eq('section_id', sectionId)
+    } else {
+      // 新規セクションをinsert
+      const { data: sd, error: se } = await sb
+        .from('report_sections')
+        .insert(secPayload)
+        .select('id')
+        .single()
+      if (se) throw se
+      sectionId = sd.id
+    }
+    keptSectionIds.push(sectionId)
+
+    // チェックリスト
     if (sec.mode === 'checklist' && sec.items.length > 0) {
       await sb.from('checklist_items').insert(
-        sec.items.map((it, j) => ({ section_id: sd.id, position: j, text: it.text, done: it.done }))
+        sec.items.map((it, j) => ({ section_id: sectionId, position: j, text: it.text, done: it.done }))
       )
     }
 
+    // 新規写真のみアップロード（既存写真はそのまま）
     for (let pi = 0; pi < sec.photos.length; pi++) {
       const path = await uploadPhoto(sec.photos[pi], id!)
-      await sb.from('photos').insert({ report_id: id, section_id: sd.id, storage_path: path, position: pi })
+      await sb.from('photos').insert({ report_id: id, section_id: sectionId, storage_path: path, position: 9000 + pi })
     }
   }
 
+  // 削除されたセクションを削除（フォームに含まれなくなったセクション）
+  if (reportId) {
+    const { data: existingSections } = await sb
+      .from('report_sections')
+      .select('id')
+      .eq('report_id', id)
+    const toDelete = (existingSections ?? [])
+      .map((s: any) => s.id)
+      .filter((sid: string) => !keptSectionIds.includes(sid))
+    if (toDelete.length) {
+      await sb.from('report_sections').delete().in('id', toDelete)
+    }
+  }
   // ギャラリー写真
   for (let pi = 0; pi < form.gallery_photos.length; pi++) {
     const path = await uploadPhoto(form.gallery_photos[pi], id!)
