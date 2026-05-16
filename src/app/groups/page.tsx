@@ -140,7 +140,7 @@ export default function GroupsPage() {
       <button style={S.back} onClick={() => setView('top')}><ArrowLeft size={16} /> 戻る</button>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontSize: 16, fontWeight: 600 }}>メンバー（{members.length}人）</h2>
-        {isAdmin && (
+        {(isAdmin || isSuperAdmin) && (
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => handleCreateInvite(false)} style={S.btn()}>メンバー招待</button>
             <button onClick={() => handleCreateInvite(true)} style={S.btn()}>管理者招待</button>
@@ -159,7 +159,7 @@ export default function GroupsPage() {
                 <p style={{ fontSize: 12, color: '#9c9890' }}>{m.is_admin ? '管理者' : 'メンバー'}</p>
               </div>
               {isAdmin && m.is_admin && <Shield size={14} style={{ color: '#9c9890' }} />}
-              {isAdmin && m.user_id !== user?.id && (
+              {(isAdmin || isSuperAdmin) && m.user_id !== user?.id && (
                 <button onClick={() => {
                   if (!confirm(`「${m.profiles?.display_name ?? 'このメンバー'}」を削除しますか？`)) return
                   removeMember(activeOrg!.id, m.user_id).then(loadMembers)
