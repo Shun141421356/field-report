@@ -6,9 +6,13 @@ import type { Organization, OrgMember, OrgInvite, Team } from '@/types'
 export async function getMyOrgs(): Promise<Organization[]> {
   const sb = createClient()
   console.log('getMyOrgs: fetching org_members')
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return []
+
   const { data, error } = await sb
     .from('org_members')
     .select('is_admin, org_id')
+    .eq('user_id', user.id)
     .order('joined_at')
   console.log('getMyOrgs: org_members result:', data, error)
   if (error) throw error
