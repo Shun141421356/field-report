@@ -6,7 +6,7 @@ import { getReport, getPhotoUrl, unpublishReport, deleteReport } from '@/lib/rep
 import PublishModal from '@/components/report/PublishModal'
 import { format, parseISO } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { ArrowLeft, Globe, Lock, Trash2, MapPin, Calendar, Cloud, Users, User, Edit2 } from 'lucide-react'
+import { ArrowLeft, Globe, Lock, Trash2, MapPin, Calendar, Cloud, Users, User, Edit2, Printer } from 'lucide-react'
 
 export default function ReportDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -72,6 +72,10 @@ export default function ReportDetailPage() {
             <button onClick={() => router.push(`/reports/edit?id=${id}`)}
               style={{ fontSize: 12, border: '0.5px solid #d8d4cc', background: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Edit2 size={12} /> 編集
+            </button>
+            <button onClick={() => window.print()}
+              style={{ fontSize: 12, border: '0.5px solid #d8d4cc', background: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Printer size={12} /> PDF
             </button>
             {(isAuthor || isAdmin) && (
               <button onClick={handleDelete} disabled={acting}
