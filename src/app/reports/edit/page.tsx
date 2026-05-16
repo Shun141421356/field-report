@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
 import { useAuth } from '@/hooks/useAuth'
-import { getReport, saveReport, getPhotoUrl } from '@/lib/reports'
+import { getReport, saveReport, getPhotoUrl, deletePhotos } from '@/lib/reports'
 import type { ReportFormData, SectionFormData } from '@/types'
 import { Plus, X, Camera, Loader2, ArrowLeft } from 'lucide-react'
 
@@ -24,7 +24,7 @@ function EditForm() {
   const [galPrev, setGalPrev] = useState<string[]>([])
   const [existingGalPhotos, setExistingGalPhotos] = useState<{id: string, url: string}[]>([])
   const [existingSecPhotos, setExistingSecPhotos] = useState<Record<string, {id: string, url: string}[]>>({})
-  const [loading, setLoading] = useState(true)
+  const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([])  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     console.log('EditForm mounted, reportId:', reportId)
@@ -89,6 +89,10 @@ function EditForm() {
     if (!activeOrg || !form || !reportId) return
     setSaving(true); setError('')
     try {
+      // 削除対象の写真をDB・Storageから削除
+      if (deletedPhotoIds.length) {
+        await deletePhotos(deletedPhotoIds)
+      }
       await saveReport(activeOrg.id, form, reportId)
       router.push(`/reports/${reportId}`)
     } catch (e: any) { setError(e.message); setSaving(false) }
@@ -183,7 +187,10 @@ function EditForm() {
                   existingPhotos={sec.id ? (existingSecPhotos[sec.id] ?? []) : []}
                   onAdd={files => updSec(si, { photos: [...sec.photos, ...files] })}
                   onRemove={i => updSec(si, { photos: sec.photos.filter((_, j) => j !== i) })}
-                  onRemoveExisting={photoId => setExistingSecPhotos(prev => ({ ...prev, [sec.id!]: (prev[sec.id!] ?? []).filter(p => p.id !== photoId) }))}
+                  onRemoveExisting={photoId => {
+                    setDeletedPhotoIds(prev => [...prev, photoId])
+                    setExistingSecPhotos(prev => ({ ...prev, [sec.id!]: (prev[sec.id!] ?? []).filter(p => p.id !== photoId) }))
+                  }}
                 />
               </div>
             </div>
@@ -208,7 +215,10 @@ function EditForm() {
               {existingGalPhotos.map(p => (
                 <div key={p.id} style={{ position: 'relative', aspectRatio: '1' }}>
                   <img src={p.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
-                  <button onClick={() => setExistingGalPhotos(prev => prev.filter(x => x.id !== p.id))}
+                  <button onClick={() => {
+                    setDeletedPhotoIds(prev => [...prev, p.id])
+                    setExistingGalPhotos(prev => prev.filter(x => x.id !== p.id))
+                  }}
                     style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                     <X size={10} color="#fff" />
                   </button>
