@@ -24,7 +24,8 @@ function EditForm() {
   const [galPrev, setGalPrev] = useState<string[]>([])
   const [existingGalPhotos, setExistingGalPhotos] = useState<{id: string, url: string}[]>([])
   const [existingSecPhotos, setExistingSecPhotos] = useState<Record<string, {id: string, url: string}[]>>({})
-  const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([])  const [loading, setLoading] = useState(true)
+  const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     console.log('EditForm mounted, reportId:', reportId)
