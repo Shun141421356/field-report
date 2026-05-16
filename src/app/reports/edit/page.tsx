@@ -162,6 +162,12 @@ function EditForm() {
                     </button>
                   </div>
                 )}
+                {/* section photos */}
+                <SectionPhotoArea
+                  photos={sec.photos}
+                  onAdd={files => updSec(si, { photos: [...sec.photos, ...files] })}
+                  onRemove={i => updSec(si, { photos: sec.photos.filter((_, j) => j !== i) })}
+                />
               </div>
             </div>
           ))}
@@ -198,4 +204,42 @@ function EditForm() {
 
 export default function EditReportPage() {
   return <Suspense fallback={<div style={{display:'flex',justifyContent:'center',padding:48}}><div style={{width:22,height:22,border:'2px solid #d8d4cc',borderTopColor:'#1a1916',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>}><EditForm /></Suspense>
+}
+
+function SectionPhotoArea({ photos, onAdd, onRemove }: {
+  photos: File[]
+  onAdd: (files: File[]) => void
+  onRemove: (i: number) => void
+}) {
+  const [prevs, setPrevs] = useState<string[]>([])
+
+  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    onAdd(files)
+    files.forEach(f => setPrevs(p => [...p, URL.createObjectURL(f)]))
+    e.target.value = ''
+  }
+
+  function handleRemove(i: number) {
+    onRemove(i)
+    setPrevs(p => p.filter((_, j) => j !== i))
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+      {prevs.map((url, i) => (
+        <div key={i} style={{ position: 'relative', width: 56, height: 56 }}>
+          <img src={url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #d8d4cc' }} />
+          <button onClick={() => handleRemove(i)}
+            style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <X size={9} color="#fff" />
+          </button>
+        </div>
+      ))}
+      <label style={{ width: 56, height: 56, border: '1px dashed #d8d4cc', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+        <Camera size={18} style={{ color: '#d8d4cc' }} />
+        <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleInput} />
+      </label>
+    </div>
+  )
 }
