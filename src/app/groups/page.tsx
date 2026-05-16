@@ -25,6 +25,7 @@ export default function GroupsPage() {
   const [acting, setActing]     = useState(false)
 
   const isAdmin = activeOrg?.is_admin ?? false
+  console.log('isAdmin:', isAdmin, 'isSuperAdmin:', isSuperAdmin, 'user:', user?.id)
 
   useEffect(() => {
     if (!activeOrg) return
